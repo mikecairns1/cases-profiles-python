@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Profile Search Results</h2>
+<h4>Domain: {{ domain_name }}</h4>
+
+<div class="mb-4">
+    <form action="{{ url_for('search_profiles') }}" method="GET" class="row g-3">
+        <div class="col-md-4">
+            <input type="hidden" name="domain_name" value="{{ domain_name }}">
+            <input type="text" name="search_term" class="form-control" placeholder="Search term" value="{{ search_term }}">
+        </div>
+        <div class="col-md-4">
+            <button type="submit" class="btn btn-primary">Search</button>
+            <a href="{{ url_for('list_profiles') }}" class="btn btn-secondary">Back to Domains</a>
+        </div>
+    </form>
+</div>
+
+{% if profiles %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Profile ID</th>
+                <th>Account Number</th>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Created At</th>
+                <th>Last Updated</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for profile in profiles %}
+            <tr>
+                <td><a href="{{ url_for('profile_details', domain_name=domain_name, profile_id=profile.ProfileId) }}">{{ profile.ProfileId }}</a></td>
+                <td>{{ profile.AccountNumber }}</td>
+                <td>{{ profile.FirstName }}</td>
+                <td>{{ profile.LastName }}</td>
+                <td>{{ profile.EmailAddress }}</td>
+                <td>{{ profile.PhoneNumber }}</td>
+                <td>{{ profile.CreatedAt.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                <td>{{ profile.LastUpdatedAt.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if next_token %}
+    <form action="{{ url_for('search_profiles') }}" method="GET">
+        <input type="hidden" name="domain_name" value="{{ domain_name }}">
+        <input type="hidden" name="search_term" value="{{ search_term }}">
+        <input type="hidden" name="next_token" value="{{ next_token }}">
+        <button type="submit" class="btn btn-primary">Load More</button>
+    </form>
+    {% endif %}
+{% else %}
+    <p>No profiles found.</p>
+{% endif %}
+{% endblock %} 

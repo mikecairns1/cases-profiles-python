@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Connect Customer Profiles Domains</h2>
+
+{% if domains %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Domain Name</th>
+                <th>Created At</th>
+                <th>Last Updated</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for domain in domains %}
+            <tr>
+                <td><a href="{{ url_for('domain_details', domain_name=domain.DomainName) }}">{{ domain.DomainName }}</a></td>
+                <td>{{ domain.CreatedAt.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                <td>{{ domain.LastUpdatedAt.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>No domains found.</p>
+{% endif %}
+{% endblock %} 

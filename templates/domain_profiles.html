@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Domain Profiles</h2>
+<h4>{{ domain_name }}</h4>
+
+<div class="mb-4">
+    <a href="{{ url_for('domain_details', domain_name=domain_name) }}" class="btn btn-secondary">Back to Domain Details</a>
+</div>
+
+<div class="mb-3">
+    <form class="row g-3" method="GET">
+        <div class="col-auto">
+            <select name="search_field" class="form-select">
+                <option value="">Select field to search...</option>
+                {% for field in available_fields %}
+                <option value="{{ field.key }}" {% if search_field == field.key %}selected{% endif %}>
+                    {{ field.display }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-auto">
+            <input type="text" class="form-control" name="search" placeholder="Search profiles..." value="{{ search_term }}">
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary">Search</button>
+            <a href="{{ url_for('list_domain_profiles', domain_name=domain_name) }}" class="btn btn-secondary">Clear Search</a>
+        </div>
+    </form>
+</div>
+
+{% if profiles %}
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Profile ID</th>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Created At</th>
+                    <th>Last Updated</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for profile in profiles %}
+                <tr>
+                    <td><a href="{{ url_for('profile_details', domain_name=domain_name, profile_id=profile.ProfileId) }}">{{ profile.ProfileId }}</a></td>
+                    <td>{{ profile.get('FirstName', '') }}</td>
+                    <td>{{ profile.get('LastName', '') }}</td>
+                    <td>{{ profile.get('EmailAddress', '') }}</td>
+                    <td>{{ profile.get('PhoneNumber', '') }}</td>
+                    <td>{{ profile.CreatedAt.strftime('%Y-%m-%d %H:%M:%S') if profile.get('CreatedAt') else '' }}</td>
+                    <td>{{ profile.LastUpdatedAt.strftime('%Y-%m-%d %H:%M:%S') if profile.get('LastUpdatedAt') else '' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if next_token %}
+    <div class="mt-3">
+        <form method="GET" class="d-inline">
+            <input type="hidden" name="next_token" value="{{ next_token }}">
+            {% if search_term %}
+            <input type="hidden" name="search" value="{{ search_term }}">
+            <input type="hidden" name="search_field" value="{{ search_field }}">
+            {% endif %}
+            <button type="submit" class="btn btn-primary">Load More</button>
+        </form>
+    </div>
+    {% endif %}
+{% else %}
+    <p>No profiles found.</p>
+{% endif %}
+{% endblock %} 

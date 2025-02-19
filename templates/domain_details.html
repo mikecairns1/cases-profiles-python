@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Domain Details</h2>
+
+<div class="mb-4">
+    <a href="{{ url_for('list_profiles') }}" class="btn btn-secondary">Back to Domains</a>
+</div>
+
+{% if domain %}
+    <div class="card mb-4">
+        <div class="card-body">
+            <h3 class="card-title">{{ domain.DomainName }}</h3>
+            <div class="row">
+                <div class="col-md-6">
+                    {% if domain.get('CreatedAt') %}
+                        <p><strong>Created At:</strong> {{ domain.CreatedAt.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                    {% endif %}
+                    {% if domain.get('LastUpdatedAt') %}
+                        <p><strong>Last Updated:</strong> {{ domain.LastUpdatedAt.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                    {% endif %}
+                    <p><strong>Dead Letter Queue URL:</strong> {{ domain.get('DeadLetterQueueUrl') or 'Not configured' }}</p>
+                    <p><strong>Default Expiration Days:</strong> {{ domain.get('DefaultExpirationDays') or 'Not set' }}</p>
+                    <p><strong>Default Encryption Key:</strong> {{ domain.get('DefaultEncryptionKey') or 'Not set' }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Tags:</strong></p>
+                    {% if domain.get('Tags') %}
+                        <ul>
+                        {% for key, value in domain.Tags.items() %}
+                            <li><strong>{{ key }}:</strong> {{ value }}</li>
+                        {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>No tags</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if domain.get('Stats') %}
+            <div class="row mt-3">
+                <div class="col-12">
+                    <h4>Statistics</h4>
+                    <ul>
+                        <li><strong>Profile Count:</strong> 
+                            <a href="{{ url_for('list_domain_profiles', domain_name=domain.DomainName) }}">
+                                {{ domain.Stats.get('ProfileCount', 'N/A') }}
+                            </a>
+                        </li>
+                        <li><strong>Object Count:</strong> {{ domain.Stats.get('ObjectCount', 'N/A') }}</li>
+                        <li><strong>Total Size:</strong> {{ domain.Stats.get('TotalSize', 'N/A') }}</li>
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <h4>Object Types and Fields</h4>
+    {% if object_types %}
+        <div class="accordion" id="objectTypesAccordion">
+            {% for obj_type in object_types %}
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="heading{{ loop.index }}">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                            data-bs-target="#collapse{{ loop.index }}" aria-expanded="false" 
+                            aria-controls="collapse{{ loop.index }}">
+                        {{ obj_type.ObjectTypeName }}
+                    </button>
+                </h2>
+                <div id="collapse{{ loop.index }}" class="accordion-collapse collapse" 
+                     aria-labelledby="heading{{ loop.index }}" data-bs-parent="#objectTypesAccordion">
+                    <div class="accordion-body">
+                        <p><strong>Description:</strong> {{ obj_type.get('Description') or 'No description' }}</p>
+                        {% if obj_type.get('CreatedAt') %}
+                            <p><strong>Created At:</strong> {{ obj_type.CreatedAt.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                        {% endif %}
+                        {% if obj_type.get('LastUpdatedAt') %}
+                            <p><strong>Last Updated:</strong> {{ obj_type.LastUpdatedAt.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                        {% endif %}
+                        
+                        {% if obj_type.get('Templates') %}
+                            <h5>Fields:</h5>
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Field Name</th>
+                                        <th>Type</th>
+                                        <th>Required</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for template in obj_type.Templates %}
+                                        {% if template.get('Fields') %}
+                                            {% for field_name, field_info in template.Fields.items() %}
+                                            <tr>
+                                                <td>{{ field_name }}</td>
+                                                <td>{{ field_info.get('ContentType', 'N/A') }}</td>
+                                                <td>{{ "Yes" if field_info.get('Required') else "No" }}</td>
+                                                <td>{{ field_info.get('Description', '') }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        {% endif %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        {% else %}
+                            <p>No field templates found for this object type.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>No object types found.</p>
+    {% endif %}
+{% else %}
+    <p>Domain not found.</p>
+{% endif %}
+{% endblock %} 

@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Profile Details</h2>
+
+<div class="mb-4">
+    <a href="{{ url_for('list_domain_profiles', domain_name=domain_name) }}" class="btn btn-secondary">Back to Profiles</a>
+</div>
+
+{% if profile %}
+    <div class="card">
+        <div class="card-body">
+            <h3 class="card-title">{{ profile.get('FirstName', '') }} {{ profile.get('LastName', '') }}</h3>
+            
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <h4>Basic Information</h4>
+                    <table class="table table-sm">
+                        <tr>
+                            <th>Profile ID:</th>
+                            <td>{{ profile.get('ProfileId', '') }}</td>
+                        </tr>
+                        <tr>
+                            <th>Account Number:</th>
+                            <td>{{ profile.get('AccountNumber', '') }}</td>
+                        </tr>
+                        <tr>
+                            <th>Birth Date:</th>
+                            <td>{{ profile.get('BirthDate', '') }}</td>
+                        </tr>
+                        <tr>
+                            <th>Gender:</th>
+                            <td>{{ profile.get('GenderString', '') }}</td>
+                        </tr>
+                        <tr>
+                            <th>Party Type:</th>
+                            <td>{{ profile.get('PartyTypeString', '') }}</td>
+                        </tr>
+                    </table>
+
+                    <h4 class="mt-4">Contact Information</h4>
+                    <table class="table table-sm">
+                        <tr>
+                            <th>Phone Number:</th>
+                            <td>{{ profile.get('PhoneNumber', '') }}</td>
+                        </tr>
+                        <tr>
+                            <th>Email Address:</th>
+                            <td>{{ profile.get('EmailAddress', '') }}</td>
+                        </tr>
+                        <tr>
+                            <th>Business Email:</th>
+                            <td>{{ profile.get('BusinessEmailAddress', '') }}</td>
+                        </tr>
+                        <tr>
+                            <th>Business Phone:</th>
+                            <td>{{ profile.get('BusinessPhoneNumber', '') }}</td>
+                        </tr>
+                        <tr>
+                            <th>Home Phone:</th>
+                            <td>{{ profile.get('HomePhoneNumber', '') }}</td>
+                        </tr>
+                        <tr>
+                            <th>Mobile Phone:</th>
+                            <td>{{ profile.get('MobilePhoneNumber', '') }}</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="col-md-6">
+                    {% if profile.get('Address') %}
+                        <h4>Primary Address</h4>
+                        <table class="table table-sm">
+                            <tr>
+                                <th>Address:</th>
+                                <td>
+                                    {{ profile.Address.get('Address1', '') }}<br>
+                                    {% if profile.Address.get('Address2') %}{{ profile.Address.Address2 }}<br>{% endif %}
+                                    {{ profile.Address.get('City', '') }}, {{ profile.Address.get('State', '') }} {{ profile.Address.get('PostalCode', '') }}<br>
+                                    {{ profile.Address.get('Country', '') }}
+                                </td>
+                            </tr>
+                        </table>
+                    {% endif %}
+
+                    {% if profile.get('MailingAddress') %}
+                        <h4 class="mt-4">Mailing Address</h4>
+                        <table class="table table-sm">
+                            <tr>
+                                <th>Address:</th>
+                                <td>
+                                    {{ profile.MailingAddress.get('Address1', '') }}<br>
+                                    {% if profile.MailingAddress.get('Address2') %}{{ profile.MailingAddress.Address2 }}<br>{% endif %}
+                                    {{ profile.MailingAddress.get('City', '') }}, {{ profile.MailingAddress.get('State', '') }} {{ profile.MailingAddress.get('PostalCode', '') }}<br>
+                                    {{ profile.MailingAddress.get('Country', '') }}
+                                </td>
+                            </tr>
+                        </table>
+                    {% endif %}
+
+                    {% if profile.get('Attributes') %}
+                        <h4 class="mt-4">Additional Attributes</h4>
+                        <table class="table table-sm">
+                            {% for key, value in profile.Attributes.items() %}
+                            <tr>
+                                <th>{{ key }}:</th>
+                                <td>{{ value }}</td>
+                            </tr>
+                            {% endfor %}
+                        </table>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% else %}
+    <div class="alert alert-warning">Profile not found.</div>
+{% endif %}
+{% endblock %} 

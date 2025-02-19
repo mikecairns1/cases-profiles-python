@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Wisdom Assistants</h2>
+<p>
+    These are the assistants configured in your Amazon Connect Wisdom instance.
+</p>
+{% if assistants %}
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>ID</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Description</th>
+                <th>Tags</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for assistant in assistants %}
+                <tr>
+                    <td>{{ assistant.name }}</td>
+                    <td>{{ assistant.assistantId }}</td>
+                    <td>{{ assistant.type }}</td>
+                    <td>{{ assistant.status }}</td>
+                    <td>{{ assistant.description }}</td>
+                    <td>
+                        {% for key, value in assistant.tags.items() %}
+                            {{ key }}: {{ value }}<br>
+                        {% endfor %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>No assistants found.</p>
+{% endif %}
+
+{% endblock %} 

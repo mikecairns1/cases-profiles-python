@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 offset-md-3">
+        <h2>AWS Credentials</h2>
+        <form method="POST">
+            <div class="mb-3">
+                <label for="access_key" class="form-label">Access Key ID</label>
+                <input type="text" class="form-control" id="access_key" name="access_key" 
+                       value="{{ credentials.access_key or '' }}" required>
+            </div>
+            <div class="mb-3">
+                <label for="secret_key" class="form-label">Secret Access Key</label>
+                <input type="password" class="form-control" id="secret_key" name="secret_key" 
+                       value="{{ credentials.secret_key or '' }}" required>
+            </div>
+            <div class="mb-3">
+                <label for="session_token" class="form-label">Session Token</label>
+                <input type="password" class="form-control" id="session_token" name="session_token" 
+                       value="{{ credentials.session_token or '' }}" required>
+            </div>
+            <div class="mb-3">
+                <label for="region" class="form-label">Region</label>
+                <input type="text" class="form-control" id="region" name="region" 
+                       value="{{ credentials.region or '' }}" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Save Credentials</button>
+        </form>
+    </div>
+</div>
+{% endblock %} 

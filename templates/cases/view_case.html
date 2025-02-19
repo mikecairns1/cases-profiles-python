@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Case Details</h2>
+
+<div class="mb-4">
+    <a href="{{ url_for('list_cases', domain_id=domain_id) }}" class="btn btn-secondary">Back to Cases</a>
+</div>
+
+{% if case %}
+    <div class="card">
+        <div class="card-body">
+            <h3 class="card-title">
+                {% for field in case.fields if field.id == 'title' %}
+                    {{ field.value.stringValue }}
+                {% endfor %}
+            </h3>
+            
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <h4>Case Information</h4>
+                    <table class="table table-sm">
+                        <tr>
+                            <th>Case ID:</th>
+                            <td>{{ case.caseId }}</td>
+                        </tr>
+                        <tr>
+                            <th>Status:</th>
+                            <td>
+                                {% for field in case.fields if field.id == 'status' %}
+                                    <span class="badge {% if field.value.stringValue == 'open' %}bg-success{% else %}bg-secondary{% endif %}">
+                                        {{ field.value.stringValue }}
+                                    </span>
+                                {% endfor %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Created:</th>
+                            <td>
+                                {% for field in case.fields if field.id == 'created_datetime' %}
+                                    {{ field.value.stringValue|datetime }}
+                                {% endfor %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Last Updated:</th>
+                            <td>
+                                {% for field in case.fields if field.id == 'last_updated_datetime' %}
+                                    {{ field.value.stringValue|datetime }}
+                                {% endfor %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Assigned To:</th>
+                            <td>
+                                {% for field in case.fields if field.id == 'assigned_user' %}
+                                    {{ field.value.stringValue|default('Unassigned', true) }}
+                                {% endfor %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Case Reason:</th>
+                            <td>
+                                {% for field in case.fields if field.id == 'case_reason' %}
+                                    {{ field.value.stringValue|default('Not specified', true) }}
+                                {% endfor %}
+                            </td>
+                        </tr>
+                    </table>
+
+                    {% for field in case.fields if field.id == 'summary' %}
+                        <h4 class="mt-4">Summary</h4>
+                        <div class="card">
+                            <div class="card-body">
+                                {{ field.value.stringValue|default('No summary provided', true)|nl2br }}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="col-md-6">
+                    <h4>Case History</h4>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Event</th>
+                                    <th>User</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for event in events %}
+                                <tr>
+                                    <td>{{ event.eventDateTime|datetime }}</td>
+                                    <td>{{ event.eventType }}</td>
+                                    <td>{{ event.eventSource }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% else %}
+    <div class="alert alert-warning">Case not found.</div>
+{% endif %}
+{% endblock %} 
