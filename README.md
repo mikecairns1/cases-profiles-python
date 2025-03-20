@@ -7,6 +7,8 @@ This Flask application provides a web interface for interacting with Amazon Conn
 *   List, view details of, and create Cases.
 *   View audit history of Cases.
 
+## !!!!!Very early testing proceed with Caution. This has many bugs!!!!!
+
 ## Prerequisites
 
 *   Python 3.7+
