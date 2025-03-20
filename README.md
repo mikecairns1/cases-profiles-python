@@ -59,9 +59,15 @@ This Flask application provides a web interface for interacting with Amazon Conn
     *   `profile_details.html`:  Shows details of a specific Customer Profile.
     *   `domain_details.html`:  Shows details of a specific Customer Profiles domain.
     *   `domain_profiles.html`: Lists profiles within a specific domain, with search functionality.
+    *   `create_profile.html`: Form for creating a new customer profile.
     *   `cases/list_cases.html`: Lists Connect Cases with filtering and pagination.
     *   `cases/view_case.html`: Displays details of a specific Case, including audit history.
     *   `cases/create_case.html`: Form for creating a new Case.
+    *   `cases/create_case_step1.html`: First step of case creation workflow.
+    *   `cases/create_case_step2.html`: Second step of case creation workflow.
+    *   `cases/create_case_step3.html`: Final step of case creation workflow.
+    *   `qic/qic.html`: Lists Q in Connect assistants and knowledge bases.
+    *   `qic/view_knowledge_base.html`: Shows details of a specific knowledge base.
 *   **`requirements.txt`:** Lists the Python dependencies for the project.
 
 ## Extending to Other Amazon Connect Services
