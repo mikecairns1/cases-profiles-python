@@ -794,6 +794,9 @@ def view_case(domain_id, case_id):
 @app.route('/cases/create', methods=['GET', 'POST'])
 @require_credentials
 def create_case():
+    return handle_case_creation()
+
+def handle_case_creation():
     """Handle case creation process
     
     Step 1: Select a Case Domain
@@ -1417,136 +1420,128 @@ def create_case():
 @app.route('/qic/knowledge-base/<knowledge_base_id>')
 @require_credentials
 def view_knowledge_base(knowledge_base_id):
-    """Display detailed information about a specific knowledge base
-    Args:
-        knowledge_base_id: ID of the knowledge base to display
-    Shows:
-        - Basic information (name, type, status)
-        - Content details
-        - Last modified and creation times
-        - Any associated assistants or integrations
-        - List of files in the knowledge base with filtering and pagination
-    """
-    try:
-        # Create QConnect client
-        qic_client = boto3.client(
-            'qconnect',
-            aws_access_key_id=credentials['access_key'],
-            aws_secret_access_key=credentials['secret_key'],
-            aws_session_token=credentials['session_token'],
-            region_name=credentials['region'],
-            config=Config(
-                connect_timeout=5,
-                retries={'max_attempts': 3},
-                region_name=credentials['region']
-            )
+    """Display detailed information about a specific knowledge base"""
+    kb_data = fetch_knowledge_base_data(knowledge_base_id)
+    return render_template('qic/view_knowledge_base.html', knowledge_base=kb_data)
+
+def fetch_knowledge_base_data(knowledge_base_id):
+    """Fetch and process knowledge base data"""
+    qic_client = create_qconnect_client()
+    kb_response = get_knowledge_base_details(qic_client, knowledge_base_id)
+    assistants = get_assistants(qic_client)
+    files, content_types, pagination = get_knowledge_base_contents(qic_client, knowledge_base_id)
+    
+    return structure_knowledge_base_data(knowledge_base_id, kb_response, assistants, files, content_types, pagination)
+
+def create_qconnect_client():
+    """Create and return a QConnect client"""
+    return boto3.client(
+        'qconnect',
+        aws_access_key_id=credentials['access_key'],
+        aws_secret_access_key=credentials['secret_key'],
+        aws_session_token=credentials['session_token'],
+        region_name=credentials['region'],
+        config=Config(
+            connect_timeout=5,
+            retries={'max_attempts': 3},
+            region_name=credentials['region']
         )
-        
-        print(f"Attempting to fetch knowledge base with ID: {knowledge_base_id}")
-        
-        # Get knowledge base details
-        try:
-            kb_response = qic_client.get_knowledge_base(
-                knowledgeBaseId=knowledge_base_id
-            )
-            print(f"Knowledge base response: {json.dumps(kb_response, default=str)}")
+    )
+
+def get_knowledge_base_details(qic_client, knowledge_base_id):
+    """Get knowledge base details"""
+    try:
+        return qic_client.get_knowledge_base(knowledgeBaseId=knowledge_base_id)
+    except Exception as e:
+        print(f"Error getting knowledge base details: {str(e)}")
+        flash(f'Error retrieving knowledge base details: {str(e)}', 'error')
+        return redirect(url_for('list_qic'))
+
+def get_assistants(qic_client):
+    """Get all assistants"""
+    assistants_response = qic_client.list_assistants()
+    return assistants_response.get('assistantSummaries', [])
+
+def get_knowledge_base_contents(qic_client, knowledge_base_id):
+    """Get list of files in the knowledge base with filtering"""
+    content_type = request.args.get('content_type', '')
+    status = request.args.get('status', '')
+    search_term = request.args.get('search', '')
+    next_token = request.args.get('next_token')
+    max_results = int(request.args.get('max_results', 20))
+    
+    files = []
+    total_files = 0
+    content_types = set()
+    
+    try:
+        while True:
+            params = build_content_params(knowledge_base_id, content_type, status, search_term, next_token, max_results)
+            contents_response = qic_client.list_contents(**params)
             
-            # Get all assistants to check for associations
-            assistants_response = qic_client.list_assistants()
-            assistants = assistants_response.get('assistantSummaries', [])
+            page_files = contents_response.get('contentSummaries', [])
+            files.extend(page_files)
+            total_files += len(page_files)
             
-            # Get query parameters for content filtering and pagination
-            content_type = request.args.get('content_type', '')
-            status = request.args.get('status', '')
-            search_term = request.args.get('search', '')
-            next_token = request.args.get('next_token')
-            max_results = int(request.args.get('max_results', 20))
-            
-            # Get list of files in the knowledge base with filtering
-            files = []
-            total_files = 0
-            try:
-                while True:
-                    params = {
-                        'knowledgeBaseId': knowledge_base_id,
-                        'maxResults': max_results
-                    }
-                    
-                    # Add filters if specified
-                    if content_type:
-                        params['contentType'] = content_type
-                    if status:
-                        params['status'] = status
-                    if search_term:
-                        params['searchTerm'] = search_term
-                    if next_token:
-                        params['nextToken'] = next_token
-                    
-                    print(f"Fetching knowledge base contents with params: {params}")
-                    contents_response = qic_client.list_contents(**params)
-                    print(f"Contents response: {json.dumps(contents_response, default=str)}")
-                    
-                    # Add files from this page
-                    page_files = contents_response.get('contentSummaries', [])
-                    files.extend(page_files)
-                    total_files += len(page_files)
-                    
-                    # Check for more pages
-                    next_token = contents_response.get('nextToken')
-                    if not next_token or len(files) >= max_results:
-                        break
-                
-                print(f"Found {total_files} files in knowledge base")
-                
-            except Exception as content_error:
-                print(f"Error listing knowledge base contents: {str(content_error)}")
-                flash(f"Error listing knowledge base contents: {str(content_error)}", 'error')
-                files = []
-                next_token = None
-            
-            # Get content types for filtering
-            content_types = set()
-            for file in files:
+            for file in page_files:
                 if file.get('type'):
                     content_types.add(file['type'])
             
-            # Structure the knowledge base data
-            kb_data = {
-                'id': knowledge_base_id,
-                'name': kb_response.get('name'),
-                'type': kb_response.get('knowledgeBaseType'),
-                'status': kb_response.get('status'),
-                'description': kb_response.get('description'),
-                'lastModifiedTime': kb_response.get('lastModifiedTime'),
-                'createdTime': kb_response.get('createdTime'),
-                'content': kb_response.get('content'),
-                'assistants': assistants,
-                'files': files,
-                'content_types': sorted(list(content_types)),
-                'filters': {
-                    'content_type': content_type,
-                    'status': status,
-                    'search': search_term
-                },
-                'pagination': {
-                    'next_token': next_token,
-                    'max_results': max_results,
-                    'total_files': total_files
-                }
-            }
-            
-            return render_template('qic/view_knowledge_base.html',
-                                knowledge_base=kb_data)
-                                
-        except Exception as e:
-            print(f"Error getting knowledge base details: {str(e)}")
-            flash(f'Error retrieving knowledge base details: {str(e)}', 'error')
-            return redirect(url_for('list_qic'))
-            
-    except Exception as e:
-        print(f"Top-level error in view_knowledge_base: {str(e)}")
-        flash(f'Error: {str(e)}', 'error')
-        return redirect(url_for('list_qic'))
+            next_token = contents_response.get('nextToken')
+            if not next_token or len(files) >= max_results:
+                break
+        
+    except Exception as content_error:
+        print(f"Error listing knowledge base contents: {str(content_error)}")
+        flash(f"Error listing knowledge base contents: {str(content_error)}", 'error')
+        files = []
+        next_token = None
+    
+    pagination = {
+        'next_token': next_token,
+        'max_results': max_results,
+        'total_files': total_files
+    }
+    
+    return files, sorted(list(content_types)), pagination
+
+def build_content_params(knowledge_base_id, content_type, status, search_term, next_token, max_results):
+    """Build parameters for listing contents"""
+    params = {
+        'knowledgeBaseId': knowledge_base_id,
+        'maxResults': max_results
+    }
+    if content_type:
+        params['contentType'] = content_type
+    if status:
+        params['status'] = status
+    if search_term:
+        params['searchTerm'] = search_term
+    if next_token:
+        params['nextToken'] = next_token
+    return params
+
+def structure_knowledge_base_data(knowledge_base_id, kb_response, assistants, files, content_types, pagination):
+    """Structure the knowledge base data"""
+    return {
+        'id': knowledge_base_id,
+        'name': kb_response.get('name'),
+        'type': kb_response.get('knowledgeBaseType'),
+        'status': kb_response.get('status'),
+        'description': kb_response.get('description'),
+        'lastModifiedTime': kb_response.get('lastModifiedTime'),
+        'createdTime': kb_response.get('createdTime'),
+        'content': kb_response.get('content'),
+        'assistants': assistants,
+        'files': files,
+        'content_types': content_types,
+        'filters': {
+            'content_type': request.args.get('content_type', ''),
+            'status': request.args.get('status', ''),
+            'search': request.args.get('search', '')
+        },
+        'pagination': pagination
+    }
 
 @app.template_filter('datetime')
 def format_datetime(value):
