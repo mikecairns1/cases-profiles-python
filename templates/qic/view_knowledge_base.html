@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('list_qic') }}">Q in Connect</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Knowledge Base Details</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Knowledge Base Details</h5>
+                    <a href="{{ url_for('list_qic') }}" class="btn btn-secondary">Back to List</a>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Basic Information</h6>
+                            <table class="table">
+                                <tr>
+                                    <th>Name:</th>
+                                    <td>{{ knowledge_base.name }}</td>
+                                </tr>
+                                <tr>
+                                    <th>ID:</th>
+                                    <td>{{ knowledge_base.id }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Type:</th>
+                                    <td>{{ knowledge_base.type }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Status:</th>
+                                    <td>
+                                        <span class="badge {% if knowledge_base.status == 'ACTIVE' %}bg-success{% elif knowledge_base.status == 'FAILED' %}bg-danger{% else %}bg-warning{% endif %}">
+                                            {{ knowledge_base.status }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Timestamps</h6>
+                            <table class="table">
+                                <tr>
+                                    <th>Created:</th>
+                                    <td>{{ knowledge_base.createdTime|datetime }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Last Modified:</th>
+                                    <td>{{ knowledge_base.lastModifiedTime|datetime }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    {% if knowledge_base.description %}
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <h6>Description</h6>
+                            <p>{{ knowledge_base.description }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if knowledge_base.content %}
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <h6>Content Details</h6>
+                            <pre class="bg-light p-3 rounded"><code>{{ knowledge_base.content|tojson(indent=2) }}</code></pre>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if knowledge_base.assistants %}
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <h6>Available Assistants</h6>
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>ID</th>
+                                            <th>Status</th>
+                                            <th>Type</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for assistant in knowledge_base.assistants %}
+                                        <tr>
+                                            <td>{{ assistant.name }}</td>
+                                            <td>{{ assistant.assistantId }}</td>
+                                            <td>
+                                                <span class="badge {% if assistant.status == 'ACTIVE' %}bg-success{% elif assistant.status == 'FAILED' %}bg-danger{% else %}bg-warning{% endif %}">
+                                                    {{ assistant.status }}
+                                                </span>
+                                            </td>
+                                            <td>{{ assistant.type }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if knowledge_base.files %}
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="mb-0">Files</h6>
+                                <div class="d-flex gap-2">
+                                    <form method="get" class="d-flex gap-2">
+                                        <input type="hidden" name="knowledge_base_id" value="{{ knowledge_base.id }}">
+                                        
+                                        <select name="content_type" class="form-select form-select-sm">
+                                            <option value="">All Types</option>
+                                            {% for type in knowledge_base.content_types %}
+                                            <option value="{{ type }}" {% if type == knowledge_base.filters.content_type %}selected{% endif %}>
+                                                {{ type }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                        
+                                        <select name="status" class="form-select form-select-sm">
+                                            <option value="">All Statuses</option>
+                                            <option value="ACTIVE" {% if knowledge_base.filters.status == 'ACTIVE' %}selected{% endif %}>Active</option>
+                                            <option value="FAILED" {% if knowledge_base.filters.status == 'FAILED' %}selected{% endif %}>Failed</option>
+                                            <option value="PENDING" {% if knowledge_base.filters.status == 'PENDING' %}selected{% endif %}>Pending</option>
+                                        </select>
+                                        
+                                        <input type="text" name="search" class="form-control form-control-sm" 
+                                               placeholder="Search..." value="{{ knowledge_base.filters.search }}">
+                                        
+                                        <button type="submit" class="btn btn-primary btn-sm">Apply Filters</button>
+                                    </form>
+                                </div>
+                            </div>
+                            
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Type</th>
+                                            <th>Status</th>
+                                            <th>Last Modified</th>
+                                            <th>Size</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for file in knowledge_base.files %}
+                                        <tr>
+                                            <td>{{ file.title }}</td>
+                                            <td>{{ file.type }}</td>
+                                            <td>
+                                                <span class="badge {% if file.status == 'ACTIVE' %}bg-success{% elif file.status == 'FAILED' %}bg-danger{% else %}bg-warning{% endif %}">
+                                                    {{ file.status }}
+                                                </span>
+                                            </td>
+                                            <td>{{ file.lastModifiedTime|datetime }}</td>
+                                            <td>{% if file.metadata and file.metadata.size %}{{ file.metadata.size|filesizeformat }}{% else %}N/A{% endif %}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            {% if knowledge_base.pagination.total_files > 0 %}
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <div>
+                                    Showing {{ knowledge_base.files|length }} of {{ knowledge_base.pagination.total_files }} files
+                                </div>
+                                <div class="d-flex gap-2">
+                                    {% if knowledge_base.pagination.next_token %}
+                                    <a href="{{ url_for('view_knowledge_base', knowledge_base_id=knowledge_base.id, next_token=knowledge_base.pagination.next_token, content_type=knowledge_base.filters.content_type, status=knowledge_base.filters.status, search=knowledge_base.filters.search) }}" 
+                                       class="btn btn-primary btn-sm">
+                                        Load More
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                No files found in this knowledge base.
+                                {% if knowledge_base.filters.content_type or knowledge_base.filters.status or knowledge_base.filters.search %}
+                                <a href="{{ url_for('view_knowledge_base', knowledge_base_id=knowledge_base.id) }}" class="alert-link">Clear filters</a> to see all files.
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

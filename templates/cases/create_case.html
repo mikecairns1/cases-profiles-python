@@ -9,29 +9,175 @@
 
 <div class="card">
     <div class="card-body">
-        <form method="POST">
+        <form method="POST" id="caseForm">
             <div class="mb-3">
-                <label for="title" class="form-label">Title</label>
-                <input type="text" class="form-control" id="title" name="title" required>
-            </div>
-            
-            <div class="mb-3">
-                <label for="description" class="form-label">Description</label>
-                <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
-            </div>
-            
-            <div class="mb-3">
-                <label for="priority" class="form-label">Priority</label>
-                <select class="form-select" id="priority" name="priority">
-                    <option value="LOW">Low</option>
-                    <option value="MEDIUM">Medium</option>
-                    <option value="HIGH">High</option>
-                    <option value="URGENT">Urgent</option>
+                <label for="domain_id" class="form-label">Domain</label>
+                <select class="form-select" id="domain_id" name="domain_id" required>
+                    {% for domain in domains %}
+                    <option value="{{ domain.domainId }}" {% if domain.domainId == selected_domain_id %}selected{% endif %}>
+                        {{ domain.name }}
+                    </option>
+                    {% endfor %}
                 </select>
             </div>
             
-            <button type="submit" class="btn btn-primary">Create Case</button>
+            <div class="mb-3">
+                <label for="template_id" class="form-label">Case Template</label>
+                <select class="form-select" id="template_id" name="template_id" required>
+                    {% if templates %}
+                        {% for template in templates %}
+                        <option value="{{ template.templateId }}" {% if template.templateId == selected_template_id %}selected{% endif %}>
+                            {{ template.name }}
+                        </option>
+                        {% endfor %}
+                    {% else %}
+                        <option value="">No templates available</option>
+                    {% endif %}
+                </select>
+                {% if not templates %}
+                <div class="form-text text-warning">
+                    No templates are available for this domain. You need to create a template first.
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Profile association section -->
+            <div class="mb-3">
+                <label for="profile_id" class="form-label">Associate with Profile</label>
+                <select class="form-select" id="profile_id" name="profile_id">
+                    <option value="">Select a profile (optional)</option>
+                    {% if profiles %}
+                        {% for profile in profiles %}
+                            <option value="{{ profile.ProfileId }}" 
+                                    data-customer-id="{{ profile.get('AccountNumber', profile.ProfileId) }}"
+                                    data-name="{{ profile.get('FirstName', '') }} {{ profile.get('LastName', '') }}">
+                                {{ profile.get('FirstName', '') }} {{ profile.get('LastName', '') }} 
+                                {% if profile.get('AccountNumber') %}({{ profile.get('AccountNumber') }}){% endif %}
+                            </option>
+                        {% endfor %}
+                    {% endif %}
+                </select>
+                <div class="form-text">
+                    Associating a profile will automatically fill in the customer ID.
+                </div>
+            </div>
+            
+            <!-- Dynamic template fields section -->
+            <div id="template-fields">
+                {% if template_fields %}
+                    {% for field in template_fields %}
+                        {% if field.id not in ['status'] %}
+                            <div class="mb-3">
+                                <label for="{{ field.id }}" class="form-label">
+                                    {{ field.name }}
+                                    {% if field.required %}
+                                        <span class="text-danger">*</span>
+                                    {% endif %}
+                                </label>
+                                
+                                {% if field.type == 'PICKLIST' and field.picklistOptions %}
+                                    <select class="form-select" id="{{ field.id }}" name="{{ field.id }}" {% if field.required %}required{% endif %}>
+                                        <option value="">Select a value</option>
+                                        {% for option in field.picklistOptions %}
+                                            <option value="{{ option.value }}">{{ option.value }}</option>
+                                        {% endfor %}
+                                    </select>
+                                {% elif field.type == 'TEXTAREA' %}
+                                    <textarea class="form-control" id="{{ field.id }}" name="{{ field.id }}" rows="3" {% if field.required %}required{% endif %}></textarea>
+                                {% else %}
+                                    <input type="text" class="form-control" id="{{ field.id }}" name="{{ field.id }}" {% if field.required %}required{% endif %}>
+                                {% endif %}
+                                
+                                {% if field.description %}
+                                    <div class="form-text">{{ field.description }}</div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <!-- Fallback to basic fields if no template fields are found -->
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Title <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="title" name="title" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="customer_id" class="form-label">Customer ID <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="customer_id" name="customer_id" required>
+                        <div class="form-text">Enter a unique identifier for the customer</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="priority" class="form-label">Priority</label>
+                        <select class="form-select" id="priority" name="priority">
+                            <option value="">Select a priority</option>
+                            <option value="LOW">Low</option>
+                            <option value="MEDIUM">Medium</option>
+                            <option value="HIGH">High</option>
+                            <option value="URGENT">Urgent</option>
+                        </select>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Hidden field for storing the associated profile data -->
+            <input type="hidden" id="associated_profile_name" name="associated_profile_name" value="">
+            
+            <button type="submit" class="btn btn-primary" {% if not templates %}disabled{% endif %}>Create Case</button>
+            {% if not templates %}
+            <div class="form-text text-danger mt-2">
+                Case creation is disabled because no templates are available.
+            </div>
+            {% endif %}
         </form>
     </div>
 </div>
+
+<script>
+// Update templates when domain changes
+document.getElementById('domain_id').addEventListener('change', function() {
+    const domainId = this.value;
+    if (domainId) {
+        window.location.href = "{{ url_for('create_case') }}?domain_id=" + domainId;
+    }
+});
+
+// Update fields when template changes
+document.getElementById('template_id').addEventListener('change', function() {
+    const domainId = document.getElementById('domain_id').value;
+    const templateId = this.value;
+    if (domainId && templateId) {
+        window.location.href = "{{ url_for('create_case') }}?domain_id=" + domainId + "&template_id=" + templateId;
+    }
+});
+
+// Auto-populate customer_id field when a profile is selected
+document.getElementById('profile_id').addEventListener('change', function() {
+    const selectedOption = this.options[this.selectedIndex];
+    const customerId = selectedOption.getAttribute('data-customer-id');
+    const profileName = selectedOption.getAttribute('data-name');
+    
+    // Set the customer_id field if it exists
+    const customerIdField = document.getElementById('customer_id');
+    if (customerIdField && customerId) {
+        customerIdField.value = customerId;
+    }
+    
+    // Store the profile name for reference
+    document.getElementById('associated_profile_name').value = profileName;
+    
+    // Look for any dynamic customer_id field as well
+    const dynamicCustomerIdFields = document.querySelectorAll('[id$="customer_id"]');
+    dynamicCustomerIdFields.forEach(field => {
+        if (customerId) {
+            field.value = customerId;
+        }
+    });
+});
+</script>
 {% endblock %} 

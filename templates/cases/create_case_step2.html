@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Create New Case - Step 2: Select Customer Profile</h2>
+
+<div class="mb-4">
+    <a href="{{ url_for('list_cases') }}" class="btn btn-secondary">Back to Cases</a>
+    <a href="{{ url_for('create_case', step='1') }}" class="btn btn-outline-secondary">Back to Step 1</a>
+</div>
+
+<div class="progress mb-4">
+    <div class="progress-bar bg-primary" role="progressbar" style="width: 66%" aria-valuenow="66" aria-valuemin="0" aria-valuemax="100">Step 2 of 3</div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5>Search for a Customer Profile</h5>
+    </div>
+    <div class="card-body">
+        <!-- Display the domain ID for debugging -->
+        <div class="alert alert-info mb-3">
+            Selected Case Domain: <strong>{{ case_domain_name }}</strong> (ID: {{ domain_id }})
+        </div>
+        
+        <p class="text-muted">Search for a customer profile to associate with the case. A profile is required to create a case.</p>
+        
+        <form method="GET" class="row g-3">
+            <input type="hidden" name="step" value="2">
+            <input type="hidden" name="domain_id" value="{{ domain_id }}">
+            
+            <!-- Add Profile Domain selector -->
+            <div class="col-md-12 mb-3">
+                <label for="profile_domain_name" class="form-label">Profile Domain</label>
+                <select name="profile_domain_name" id="profile_domain_name" class="form-select">
+                    {% for domain in available_profile_domains %}
+                    <option value="{{ domain.DomainName }}" {% if profile_domain_name == domain.DomainName %}selected{% endif %}>
+                        {{ domain.DomainName }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <small class="text-muted">Select the profile domain to search in</small>
+            </div>
+            
+            <div class="col-md-4">
+                <select name="search_field" class="form-select">
+                    {% for field in available_fields %}
+                    <option value="{{ field.key }}" {% if search_field == field.key %}selected{% endif %}>
+                        Search by {{ field.display }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-6">
+                <input type="text" class="form-control" name="search" placeholder="Enter search term..." value="{{ search_term }}">
+            </div>
+            
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">Search</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Select a Profile</h5>
+    </div>
+    <div class="card-body">
+        {% if profiles %}
+            <form method="POST">
+                <input type="hidden" name="step" value="2">
+                <input type="hidden" name="domain_id" value="{{ domain_id }}">
+                
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th width="5%">Select</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Account Number</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for profile in profiles %}
+                            <tr>
+                                <td>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="profile_id" id="profile_{{ profile.ProfileId }}" value="{{ profile.ProfileId }}" required>
+                                        <label class="form-check-label" for="profile_{{ profile.ProfileId }}"></label>
+                                    </div>
+                                </td>
+                                <td>{{ profile.get('FirstName', '') }} {{ profile.get('LastName', '') }}</td>
+                                <td>{{ profile.get('EmailAddress', '') }}</td>
+                                <td>{{ profile.get('PhoneNumber', '') }}</td>
+                                <td>{{ profile.get('AccountNumber', '') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-primary">Continue to Step 3</button>
+                </div>
+            </form>
+        {% else %}
+            <div class="alert alert-info">
+                {% if search_term %}
+                    No profiles found matching your search criteria. Please try a different search.
+                {% else %}
+                    No profiles found. Please search for a profile using the form above.
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 

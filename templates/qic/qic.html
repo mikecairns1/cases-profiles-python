@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item active" aria-current="page">Q in Connect</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Select Assistant</h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" action="{{ url_for('list_qic') }}">
+                        <div class="mb-3">
+                            <label for="assistant_id" class="form-label">Assistant</label>
+                            <select class="form-select" id="assistant_id" name="assistant_id">
+                                <option value="">Select an assistant...</option>
+                                {% for assistant in assistants %}
+                                <option value="{{ assistant.assistantId }}" {% if assistant.assistantId == selected_assistant_id %}selected{% endif %}>
+                                    {{ assistant.name }} ({{ assistant.type }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary">View Knowledge Bases</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            {% if selected_assistant_id and assistant_details %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Assistant Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table">
+                                <tr>
+                                    <th>Name:</th>
+                                    <td>{{ assistant_details.name }}</td>
+                                </tr>
+                                <tr>
+                                    <th>ID:</th>
+                                    <td>{{ assistant_details.assistantId }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Type:</th>
+                                    <td>{{ assistant_details.type }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Status:</th>
+                                    <td>
+                                        <span class="badge {% if assistant_details.status == 'ACTIVE' %}bg-success{% elif assistant_details.status == 'FAILED' %}bg-danger{% else %}bg-warning{% endif %}">
+                                            {{ assistant_details.status }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Knowledge Bases</h5>
+                </div>
+                <div class="card-body">
+                    {% if knowledgebases %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        <a href="{{ url_for('list_qic', assistant_id=selected_assistant_id, sort='name', order='asc' if sort == 'name' and order == 'desc' else 'desc') }}" class="text-decoration-none text-dark">
+                                            Name
+                                            {% if sort == 'name' %}
+                                                <i class="fas fa-sort-{{ 'up' if order == 'asc' else 'down' }}"></i>
+                                            {% else %}
+                                                <i class="fas fa-sort"></i>
+                                            {% endif %}
+                                        </a>
+                                    </th>
+                                    <th>ID</th>
+                                    <th>
+                                        <a href="{{ url_for('list_qic', assistant_id=selected_assistant_id, sort='type', order='asc' if sort == 'type' and order == 'desc' else 'desc') }}" class="text-decoration-none text-dark">
+                                            Type
+                                            {% if sort == 'type' %}
+                                                <i class="fas fa-sort-{{ 'up' if order == 'asc' else 'down' }}"></i>
+                                            {% else %}
+                                                <i class="fas fa-sort"></i>
+                                            {% endif %}
+                                        </a>
+                                    </th>
+                                    <th>
+                                        <a href="{{ url_for('list_qic', assistant_id=selected_assistant_id, sort='status', order='asc' if sort == 'status' and order == 'desc' else 'desc') }}" class="text-decoration-none text-dark">
+                                            Status
+                                            {% if sort == 'status' %}
+                                                <i class="fas fa-sort-{{ 'up' if order == 'asc' else 'down' }}"></i>
+                                            {% else %}
+                                                <i class="fas fa-sort"></i>
+                                            {% endif %}
+                                        </a>
+                                    </th>
+                                    <th>
+                                        <a href="{{ url_for('list_qic', assistant_id=selected_assistant_id, sort='files', order='asc' if sort == 'files' and order == 'desc' else 'desc') }}" class="text-decoration-none text-dark">
+                                            Files
+                                            {% if sort == 'files' %}
+                                                <i class="fas fa-sort-{{ 'up' if order == 'asc' else 'down' }}"></i>
+                                            {% else %}
+                                                <i class="fas fa-sort"></i>
+                                            {% endif %}
+                                        </a>
+                                    </th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for kb in knowledgebases %}
+                                <tr>
+                                    <td>{{ kb.name }}</td>
+                                    <td>{{ kb.knowledgeBaseId }}</td>
+                                    <td>{{ kb.type }}</td>
+                                    <td>
+                                        <span class="badge {% if kb.status == 'ACTIVE' %}bg-success{% elif kb.status == 'FAILED' %}bg-danger{% else %}bg-warning{% endif %}">
+                                            {{ kb.status }}
+                                        </span>
+                                    </td>
+                                    <td>{% if kb.file_count == -1 %}N/A{% else %}{{ kb.file_count|default(0) }}{% endif %}</td>
+                                    <td>
+                                        <a href="{{ url_for('view_knowledge_base', knowledge_base_id=kb.knowledgeBaseId) }}" 
+                                           class="btn btn-primary btn-sm">View Details</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        {% if selected_assistant_id %}
+                        No knowledge bases found for this assistant. Create a knowledge base to get started.
+                        {% else %}
+                        Select an assistant to view its knowledge bases.
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

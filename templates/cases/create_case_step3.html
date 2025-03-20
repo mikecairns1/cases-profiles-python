@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Create New Case - Step 3: Case Details</h2>
+
+<div class="mb-4">
+    <a href="{{ url_for('list_cases') }}" class="btn btn-secondary">Back to Cases</a>
+    <a href="/cases/create?step=2&domain_id={{ domain_id }}" class="btn btn-outline-secondary">Back to Step 2</a>
+</div>
+
+<div class="progress mb-4">
+    <div class="progress-bar bg-primary" role="progressbar" style="width: 100%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">Step 3 of 3</div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Selected Profile</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="avatar avatar-lg bg-light rounded p-2">
+                            <i class="fas fa-user fa-2x text-primary"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h5 class="mb-1">{{ profile_data.name }}</h5>
+                        <p class="text-muted mb-0">Account ID: {{ profile_data.account }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5>Complete Case Information</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST">
+            <div class="mb-3">
+                <label for="template_id" class="form-label">Case Template</label>
+                <select class="form-select" id="template_id" name="template_id" required>
+                    {% for template in templates %}
+                    <option value="{{ template.templateId }}" {% if template.templateId == selected_template_id %}selected{% endif %}>
+                        {{ template.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Case fields section -->
+            <div id="template-fields">
+                <!-- Always include title field -->
+                <div class="mb-3">
+                    <label for="title" class="form-label">
+                        Case Title <span class="text-danger">*</span>
+                    </label>
+                    <input type="text" class="form-control" id="title" name="title" required>
+                    <div class="form-text">A descriptive title for the case</div>
+                </div>
+                
+                {% if template_fields %}
+                    {% for field in template_fields %}
+                        {% if field.id not in ['status', 'title'] %}
+                            <div class="mb-3">
+                                <label for="{{ field.id }}" class="form-label">
+                                    {{ field.name }}
+                                    {% if field.required %}
+                                        <span class="text-danger">*</span>
+                                    {% endif %}
+                                </label>
+                                
+                                {% if field.id == 'customer_id' %}
+                                    <!-- Pre-fill customer_id from the profile with ARN format -->
+                                    <input type="hidden" id="{{ field.id }}" name="{{ field.id }}" 
+                                           value="">
+                                    <div class="alert alert-info">
+                                        <strong>Customer Profile:</strong> {{ profile_data.name }} (ID: {{ profile_data.id }})
+                                        <div class="small text-muted">The customer profile will be automatically linked to this case</div>
+                                    </div>
+                                
+                                {% elif field.type == 'PICKLIST' and field.picklistOptions %}
+                                    <select class="form-select" id="{{ field.id }}" name="{{ field.id }}" {% if field.required %}required{% endif %}>
+                                        <option value="">Select a value</option>
+                                        {% for option in field.picklistOptions %}
+                                            <option value="{{ option.value }}">{{ option.value }}</option>
+                                        {% endfor %}
+                                    </select>
+                                {% elif field.type == 'TEXTAREA' %}
+                                    <textarea class="form-control" id="{{ field.id }}" name="{{ field.id }}" rows="3" {% if field.required %}required{% endif %}></textarea>
+                                {% else %}
+                                    <input type="text" class="form-control" id="{{ field.id }}" name="{{ field.id }}" {% if field.required %}required{% endif %}>
+                                {% endif %}
+                                
+                                {% if field.description and field.id != 'customer_id' %}
+                                    <div class="form-text">{{ field.description }}</div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <div class="alert alert-warning">
+                        No fields available for this template. Please select a different template.
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="mt-4 d-flex justify-content-between">
+                <a href="/cases/create?step=2&domain_id={{ domain_id }}" class="btn btn-outline-secondary">Back</a>
+                <button type="submit" class="btn btn-primary">Create Case</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Update fields when template changes
+document.getElementById('template_id').addEventListener('change', function() {
+    const templateId = this.value;
+    if (templateId) {
+        // Direct URL construction to avoid encoding issues
+        let url = "/cases/create?step=3&domain_id={{ domain_id }}";
+        
+        // Add profile data
+        const urlParams = new URLSearchParams(window.location.search);
+        const profileData = urlParams.get('profile_data');
+        if (profileData) {
+            url += "&profile_data=" + encodeURIComponent(profileData);
+        }
+        
+        // Add template ID
+        url += "&template_id=" + encodeURIComponent(templateId);
+        
+        // Navigate to new URL
+        window.location.href = url;
+    }
+});
+</script>
+{% endblock %} 

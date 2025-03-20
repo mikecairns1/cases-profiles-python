@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Create New Case - Step 1: Select Domain</h2>
+
+<div class="mb-4">
+    <a href="{{ url_for('list_cases') }}" class="btn btn-secondary">Back to Cases</a>
+</div>
+
+<div class="progress mb-4">
+    <div class="progress-bar bg-primary" role="progressbar" style="width: 33%" aria-valuenow="33" aria-valuemin="0" aria-valuemax="100">Step 1 of 3</div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5>Select a Case Domain</h5>
+    </div>
+    <div class="card-body">
+        <p class="text-muted">Select the domain where you want to create a new case.</p>
+        
+        <form id="domainForm" method="POST">
+            <div class="mb-3">
+                <label for="domain_id" class="form-label">Case Domain</label>
+                <select class="form-select" id="domain_id" name="domain_id" required>
+                    <option value="">Select a domain...</option>
+                    {% for domain in domains %}
+                    <option value="{{ domain.domainId }}" {% if domain.domainId == selected_domain_id %}selected{% endif %}>
+                        {{ domain.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Debug info for domain selection -->
+            <div id="debug_info" class="alert alert-info mb-3" style="display: {% if selected_domain_id %}block{% else %}none{% endif %};">
+                Selected domain ID: <strong id="selected_domain_display">{{ selected_domain_id }}</strong>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Continue to Step 2</button>
+        </form>
+    </div>
+</div>
+
+<script>
+// Add event listener to update the debug display
+document.getElementById('domain_id').addEventListener('change', function() {
+    const selectedDomain = this.value;
+    const debugInfo = document.getElementById('debug_info');
+    const selectedDomainDisplay = document.getElementById('selected_domain_display');
+    
+    if (selectedDomain) {
+        selectedDomainDisplay.textContent = selectedDomain;
+        debugInfo.style.display = 'block';
+    } else {
+        debugInfo.style.display = 'none';
+    }
+});
+</script>
+{% endblock %} 

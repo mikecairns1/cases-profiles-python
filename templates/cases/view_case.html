@@ -66,6 +66,13 @@
                                 {% endfor %}
                             </td>
                         </tr>
+                        <!-- Display associated profile if exists -->
+                        {% for field in case.fields if field.id == 'profile_association' %}
+                        <tr>
+                            <th>Associated Profile:</th>
+                            <td>{{ field.value.stringValue }}</td>
+                        </tr>
+                        {% endfor %}
                     </table>
 
                     {% for field in case.fields if field.id == 'summary' %}

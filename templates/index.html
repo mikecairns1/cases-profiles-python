@@ -1,6 +1,29 @@
 {% extends "base.html" %}
 
 {% block content %}
+<!-- Add navigation bar -->
+<nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+    <div class="container-fluid">
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="/">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/profiles">Profiles</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/cases">Cases</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/qic">QiC</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Existing credentials form -->
 <div class="row">
     <div class="col-md-6 offset-md-3">
         <h2>AWS Credentials</h2>
